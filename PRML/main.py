@@ -32,7 +32,7 @@ class LSTM(nn.Module):
 		)
 		self.out = nn.Linear(8,2)
 	def forward(self,x):
-		print(torch.typename(x))
+		# print(torch.typename(x))
 		r_out,(h_n,h_c) = self.lstm(x,None)
 		out = self.out(r_out[:,-1,:])
 		return out
@@ -47,57 +47,67 @@ loss_func = nn.CrossEntropyLoss()
 if __name__ == "__main__":
 	DrugSim_list = RFTL.readFileToList("..\data\DrugSimMat", 0)
 	DisSim_list = RFTL.readFileToList("..\data\DiseaseSimMat", 0)
-
-	DiDrCorr_dict = RFTL.splitArray("..\data\DiDrAMat")
-
+	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat',1)
+	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat")	#所有1的坐标的list
 	DrugSim_array = RFTL.changeArray(np.array(DrugSim_list),VPT)
 	DisSim_array = RFTL.changeArray(np.array(DisSim_list),VPT)
-
-	for name in sorted(DiDrCorr_dict):
-		if name == 'train1_array':
-			DiDr_array = DiDrCorr_dict[name]
-		if name == 'test1_array':
-			DiDe_testArray = DiDrCorr_dict[name]
-
+	DiDr_array, DiDe_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
 	#存路径部分，到时候在放开，目前先执行一次保存文件
 	# Pst_list = RFTL.FindStepPath(DrugSim_array,DisSim_array,DiDr_array)
 	# print(shape(np.array(Pst_list)))
 	# np.savetxt('..\data\pst.txt',
 	# 		   np.array(Pst_list), fmt=['%s'] * np.array(Pst_list).shape[1], newline='\n')
 
-
 	# # 随机游走
 	#DiDrCorr_array = RFTL.RandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.1)
-	DrugSim_array,DisSim_array,DiDrCorr_array = RFTL.TwoRandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.8)
+	DiDr = RFTL.TwoRandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.8)
 	PstFilePath = '..\data\pst.txt'
-	for i in range(DrugSim_array.shape[0]):
-		for j in range(DisSim_array.shape[0]):
-			NoteEmbedding_list = EV.embeddingNoteVector( PstFilePath, DrugSim_array, DisSim_array, DiDrCorr_array ,i,j)
-			if len(NoteEmbedding_list) != 0:
-				print(len(NoteEmbedding_list))
-				x_train = []
-				y_train = []
 
-				for m in range(len(NoteEmbedding_list)):
-					for n in range(len(NoteEmbedding_list[0]) - 1):
-						x_train.append(NoteEmbedding_list[0][n + 1])
-				y_train.append(DiDr_array[i][j])
-				train_loader = torch.utils.data.DataLoader(dataset=np.array(x_train), batch_size=4, shuffle=True)
-				y_train = torch.Tensor(np.array(y_train))
+	#训练的坐标，包括四分1 和 随机四分0
+	train_list = DiDrSplit_list[1] + DiDrSplit_list[2] + DiDrSplit_list[3] + DiDrSplit_list[4]
 
-				for epoch in range(EPOCH):
-					for step, (x) in enumerate(train_loader):
-						b_x = torch.Tensor.float(Variable(x.view(-1, 4, 906)))
-						b_y = torch.Tensor.long(Variable(y_train))
-						if torch.cuda.is_available():
-							b_x = b_x.cuda()
-							b_y = b_y.cuda()
-						output = lstm(b_x)
-						loss = loss_func(output, b_y)
-						optimizer.zero_grad()
-						loss.backward()
-						optimizer.step()
-						print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
+	total,num = len(train_list),0
+	while True:
+		x,y = random.randint(0,np.array(DiDr_list).shape[0]),random.randint(0,np.array(DiDr_list).shape[1])
+		if DiDr_list[x][y] == 0:
+			train_list.append((x,y))
+			num += 1
+		if num == total:
+			break
+
+	random.shuffle(train_list)
+	# print('train_list',train_list)
+
+	train_num = 0
+	for i in range(len(train_list)):
+		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
+		NoteEmbedding_list = EV.embeddingNoteVector( PstFilePath,DiDr ,train_list[i][0],train_list[i][1])
+		if len(NoteEmbedding_list) != 0:
+			train_num += 1
+			print('药物%d'%train_list[i][0],'疾病%d'%train_list[i][1],len(NoteEmbedding_list))
+			x_train = []
+			y_train = []
+
+			for m in range(len(NoteEmbedding_list)):
+				for n in range(len(NoteEmbedding_list[0]) - 1):
+					x_train.append(NoteEmbedding_list[0][n + 1])
+			y_train.append(DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
+			train_loader = torch.utils.data.DataLoader(dataset=np.array(x_train), batch_size=4, shuffle=True)
+			y_train = torch.Tensor(np.array(y_train))
+
+			for epoch in range(EPOCH):
+				for step, (x) in enumerate(train_loader):
+					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 906)))
+					b_y = torch.Tensor.long(Variable(y_train))
+					if torch.cuda.is_available():
+						b_x = b_x.cuda()
+						b_y = b_y.cuda()
+					output = lstm(b_x)
+					loss = loss_func(output, b_y)
+					optimizer.zero_grad()
+					loss.backward()
+					optimizer.step()
+					print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
 
 

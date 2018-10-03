@@ -137,7 +137,6 @@ def splitArray(MatAFilePath):
 				Data_list.append(row)
 	Data_array = array(Data_list)
 	[irows, icols] = Data_array.shape
-	# print('行', irows, '列', icols)
 	WorkData_list = []
 	mid_list = []
 	for i in range(irows):
@@ -148,33 +147,8 @@ def splitArray(MatAFilePath):
 
 	WorkData_list = [mid_list[i:i + (len(mid_list) // 5 + 1)] for i in
 					 range(0, len(mid_list), len(mid_list) // 5 + 1)]
-	"""
-	需要做：1、按照WorkData_list的12345分别处理五分训练数据和五分测试数据
-			2、训练数据需要将测试数据的那部分1全部置为0，保存一份文件
-			train1_array,train2_array,train3_array,train4_array,train5_array
-			3、测试数据需要将训练数据的四分1全部置为0，保存一份文件
-			test1_array,test2_array,test3_array,test4_array,test5_array,这就是ROC曲线计算的时候找的原相关性
-	"""
-	train1_array = copy.deepcopy(Data_array)
-	# 第一份数据作为测试，测试集中的1置0，其他数据保留作为训练集----------得到训练集
-	for i in range(len(WorkData_list[0])):
-		train1_array[WorkData_list[0][i][0]][WorkData_list[0][i][1]] = 0
+	return WorkData_list
 
-	test1_array = copy.deepcopy(Data_array)
-	# 第一份测试集，将其他四分中的1都置-1-------得到测试集
-	for i in range(len(WorkData_list[1])):
-		test1_array[WorkData_list[1][i][0]][[WorkData_list[1][i][1]]] = -1
-	for i in range(len(WorkData_list[2])):
-		test1_array[WorkData_list[2][i][0]][[WorkData_list[2][i][1]]] = -1
-	for i in range(len(WorkData_list[3])):
-		test1_array[WorkData_list[3][i][0]][[WorkData_list[3][i][1]]] = -1
-	for i in range(len(WorkData_list[4])):
-		test1_array[WorkData_list[4][i][0]][[WorkData_list[4][i][1]]] = -1
-
-	EndSplitMat_dict = {
-		'train1_array': train1_array, 'test1_array': test1_array,
-	}
-	return EndSplitMat_dict
 def TwoRandomWalk(MR,MD,RD,alpha):
 	'''
 	:param MR:	药物相似性矩阵,np.array 
@@ -200,7 +174,23 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 		err = 	la.norm(P-RD)
 		if err < 10e-7:
 			break
-	MR = P[0:593,0:593] # 行号   列号
-	RD = P[593:,0:593]
-	MD = P[593:,593:]
-	return MR,MD,RD
+	# MR = P[0:593,0:593] # 行号   列号
+	# RD = P[593:,0:593]
+	# MD = P[593:,593:]
+	# return MR,MD,RD
+	return P
+
+def ChangeArray(A,list,id):
+	'''
+	:param A:原始药物疾病矩阵 
+	:param list: 所有1的坐标的list
+	:param id: 第id作为test，其他四分作为测试
+	:return: 测试矩阵和训练矩阵
+	'''
+	train_array = 1*A
+	test_array = 0*A
+	array = np.array(list)
+	for i in range(len(list[id])):
+		train_array [ array[id][i][0] ][ array[id][i][1] ] = 0
+		test_array [ array[id][i][0] ][ array[id][i][1] ] = 1
+	return train_array,test_array
