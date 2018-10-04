@@ -51,7 +51,7 @@ if __name__ == "__main__":
 	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat")	#所有1的坐标的list
 	DrugSim_array = RFTL.changeArray(np.array(DrugSim_list),VPT)
 	DisSim_array = RFTL.changeArray(np.array(DisSim_list),VPT)
-	DiDr_array, DiDe_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
+	DiDr_array, DiDr_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
 	#存路径部分，到时候在放开，目前先执行一次保存文件
 	# Pst_list = RFTL.FindStepPath(DrugSim_array,DisSim_array,DiDr_array)
 	# print(shape(np.array(Pst_list)))
@@ -109,10 +109,13 @@ if __name__ == "__main__":
 					optimizer.step()
 					print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
-
-
 	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
-	# model = torch.load('..\data\lstm_Module.pkl')  #加载模型
-	# np.savetxt('..\data\\NoteEmbedding.txt',
-	# 		   np.array(NoteEmbedding_list), fmt=['%s'] * np.array(NoteEmbedding_list).shape[1], newline='\n')
+
+	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
+	DiDr_testPathArray = []
+	for i in range(DiDr_testArray.shape[0]):
+		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
+		DiDr_testPathArray.append(mid)
+	DiDr_testPathArray = np.array(DiDr_testPathArray)
+
 

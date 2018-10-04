@@ -188,9 +188,9 @@ def ChangeArray(A,list,id):
 	:return: 测试矩阵和训练矩阵
 	'''
 	train_array = 1*A
-	test_array = 0*A
-	array = np.array(list)
+	test_array = -1*A
+	# array = np.array(list)
 	for i in range(len(list[id])):
-		train_array [ array[id][i][0] ][ array[id][i][1] ] = 0
-		test_array [ array[id][i][0] ][ array[id][i][1] ] = 1
+		train_array [ list[id][i][0] ][ list[id][i][1] ] = 0
+		test_array [ list[id][i][0] ][ list[id][i][1] ] = 1
 	return train_array,test_array
