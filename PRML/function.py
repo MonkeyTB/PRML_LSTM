@@ -165,15 +165,16 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 	M2 = np.hstack((RD.T,MD))
 	M = np.vstack((M1,M2)) #拼接后的矩阵
 	# 对M进行行归一化
+	sum_list = np.sum(M, axis=1)
 	for i in range(M.shape[0]):
-		sum_list = np.sum(M,axis = 1)
 		for j in range(M.shape[1]):
 			M[i][j] = M[i][j] / sum_list[i]
 	#初始概率矩阵P，对角为1的矩阵
 	P = np.eye(M.shape[0],dtype = int)
+	P0 = P/1
 	for i in range(100):
 		RD = P
-		P = (1-alpha)*M.T.dot(P) + alpha*M
+		P = (1-alpha)*M.T.dot(P) + alpha*P0
 		err = 	la.norm(P-RD)
 		if err < 10e-9:
 			print("随机游走进行了%d退出"%i)
