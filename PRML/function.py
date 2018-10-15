@@ -42,54 +42,57 @@ def FindStepPath(RR,DD,DR):
 	for i in range(RR.shape[0]):
 		for j in range(RR.shape[1]):#i
 			if RR[i][j] != 0 and i != j:
-				for k in range(DR.shape[0]):
-					if DR[k][j] != 0:
+				for k in range(DR.shape[1]):
+					if DR[j][k] != 0:
 						list.append([0,i,j,k,0])
-	np.savetxt('..\data\\rrd.txt',
-			   np.array(list), fmt=['%s'] * np.array(list).shape[1], newline='\n')
+	# np.savetxt('..\data\\rrd.txt',
+	# 		   np.array(list), fmt=['%s'] * np.array(list).shape[1], newline='\n')
 	#r-d-d
-	for i in range(DR.shape[1]):
-		for j in range(DR.shape[0]):
-			if DR[j][i] != 0:
+	for i in range(DR.shape[0]):
+		for j in range(DR.shape[1]):
+			if DR[i][j] != 0:
 				for k in range(DD.shape[0]):#j
 					if DD[j][k] != 0 and j != k:
 						list.append([1,i,j,k,0])
+	'''
 	#r-d-r-d
-	for i in range(DR.shape[1]):
-		for j in range(DR.shape[0]):
-			if DR[j][i] != 0:
-				for k in range(DR.shape[1]):
-					if DR[j][k] != 0 and i != k:
-						for m in range(DR.shape[0]):
-							if DR[m][k] != 0 and j != m:
+	for i in range(DR.shape[0]):
+		for j in range(DR.shape[1]):
+			if DR[i][j] != 0:
+				for k in range(DR.shape[0]):
+					if DR[k][j] != 0 and i != k:
+						for m in range(DR.shape[1]):
+							if DR[k][m] != 0 and j != m:
 								list.append([2,i,j,k,m])
+
 	#r-r-r-d
 	for i in range(RR.shape[0]):
 		for j in range(RR.shape[1]):
 			if RR[i][j] != 0 and i != j:
 				for k in range(RR.shape[0]):
 					if RR[k][j] != 0 and k != j and k != i:
-						for m in range(DR.shape[0]):
-							if DR[m][k] != 0:
+						for m in range(DR.shape[1]):
+							if DR[k][m] != 0:
 								list.append([3,i,j,k,m])
 	#r-r-d-d
 	for i in range(RR.shape[0]):
 		for j in range(RR.shape[1]):
 			if RR[i][j] != 0 and i != j:
-				for k in range(DR.shape[0]):
-					if DR[k][j] != 0:
+				for k in range(DR.shape[1]):
+					if DR[j][k] != 0:
 						for m in range(DD.shape[1]):
 							if DD[k][m] != 0 and k != m:
 								list.append([4,i,j,k,m])
 	#r-d-d-d
-	for i in range(DR.shape[1]):
-		for j in range(DR.shape[0]):
-			if DR[j][i] != 0:
+	for i in range(DR.shape[0]):
+		for j in range(DR.shape[1]):
+			if DR[i][j] != 0:
 				for k in range(DD.shape[1]):
 					if DD[j][k] != 0 and j != k:
 						for m in range(DD.shape[0]):
 							if DD[m][k] != 0 and m != k and m != j:
 								list.append([5,i,j,k,m])
+	'''
 	return list
 def ErrAnalysis(A,B):
 	#误差分析，两矩阵对应位置相减取绝对值
@@ -158,8 +161,8 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 	:return: MR、MD、RD
 	'''
 	#M1 = np.concatenate((MR,RD),axis = 1)
-	M1 = np.hstack((MR,RD.T))
-	M2 = np.hstack((RD,MD))
+	M1 = np.hstack((MR,RD))
+	M2 = np.hstack((RD.T,MD))
 	M = np.vstack((M1,M2)) #拼接后的矩阵
 	# 对M进行行归一化
 	for i in range(M.shape[0]):
@@ -170,9 +173,10 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 	P = np.eye(M.shape[0],dtype = int)
 	for i in range(100):
 		RD = P
-		P = (1-alpha)*M.T*P + alpha*M
+		P = (1-alpha)*M.T.dot(P) + alpha*M
 		err = 	la.norm(P-RD)
-		if err < 10e-7:
+		if err < 10e-9:
+			print("随机游走进行了%d退出"%i)
 			break
 	# MR = P[0:593,0:593] # 行号   列号
 	# RD = P[593:,0:593]

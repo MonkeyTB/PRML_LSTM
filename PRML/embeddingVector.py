@@ -24,10 +24,10 @@ def embeddingNoteVector(FilePath,DiDr,r,d):
 			if Pst_array[i][1] == r and  Pst_array[i][3] == d:
 				mid_list.append([Pst_array[i][1], Pst_array[i][3]])  # 起始药物ID和终止疾病ID
 				flag = True
-		else :
-			if Pst_array[i][1] == r and Pst_array[i][4] == d:
-				mid_list.append([Pst_array[i][1], Pst_array[i][4]])  # 起始药物ID和终止疾病ID
-				flag = True
+		# else :
+		# 	if Pst_array[i][1] == r and Pst_array[i][4] == d:
+		# 		mid_list.append([Pst_array[i][1], Pst_array[i][4]])  # 起始药物ID和终止疾病ID
+		# 		flag = True
 		if flag == True:
 			mid_list.append(DiDr[ Pst_array[i][1] ])  # 第一种药物
 			if  Pst_array[i][0] == 0:		# r-r-d
@@ -40,26 +40,26 @@ def embeddingNoteVector(FilePath,DiDr,r,d):
 				mid_list.append(DiDr[ Pst_array[i][3] + 593 ])	#第二种疾病
 				mid_list.append([0] * DiDr.shape[0] )  # 最后元素补0
 				embeddingVector_list.append(mid_list)
-			if  Pst_array[i][0] ==  2:		# r-d-r-d
-				mid_list.append(DiDr[ Pst_array[i][2] + 593 ] )  	# 第一种疾病
-				mid_list.append(DiDr[ Pst_array[i][3] ]) 	# 第二种药物
-				mid_list.append(DiDr[ Pst_array[i][4] + 593 ])  	# 第二种疾病
-				embeddingVector_list.append(mid_list)
-			if  Pst_array[i][0] == 3:		# r-r-r-d
-				mid_list.append(DiDr[Pst_array[i][2]])  # 第二种药物
-				mid_list.append(DiDr[Pst_array[i][3]])  # 第三种药物
-				mid_list.append(DiDr[Pst_array[i][4] + 593 ])	   # 第一种疾病
-				embeddingVector_list.append(mid_list)
-			if  Pst_array[i][0] == 4:		# r-r-d-d
-				mid_list.append(DiDr[Pst_array[i][2]])  # 第二种药物
-				mid_list.append(DiDr[Pst_array[i][3] + 593 ])     # 第一种疾病
-				mid_list.append(DiDr[Pst_array[i][4] + 593])     # 第一种疾病
-				embeddingVector_list.append(mid_list)
-			if  Pst_array[i][0] == 5:		# r-d-d-d
-				mid_list.append(DiDr[Pst_array[i][2] + 593 ])     # 第一种疾病
-				mid_list.append(DiDr[Pst_array[i][3] + 593 ])     # 第二种疾病
-				mid_list.append(DiDr[Pst_array[i][4] + 593 ])     # 第三种疾病
-				embeddingVector_list.append(mid_list)
+			# if  Pst_array[i][0] ==  2:		# r-d-r-d
+			# 	mid_list.append(DiDr[ Pst_array[i][2] + 593 ] )  	# 第一种疾病
+			# 	mid_list.append(DiDr[ Pst_array[i][3] ]) 	# 第二种药物
+			# 	mid_list.append(DiDr[ Pst_array[i][4] + 593 ])  	# 第二种疾病
+			# 	embeddingVector_list.append(mid_list)
+			# if  Pst_array[i][0] == 3:		# r-r-r-d
+			# 	mid_list.append(DiDr[Pst_array[i][2]])  # 第二种药物
+			# 	mid_list.append(DiDr[Pst_array[i][3]])  # 第三种药物
+			# 	mid_list.append(DiDr[Pst_array[i][4] + 593 ])	   # 第一种疾病
+			# 	embeddingVector_list.append(mid_list)
+			# if  Pst_array[i][0] == 4:		# r-r-d-d
+			# 	mid_list.append(DiDr[Pst_array[i][2]])  # 第二种药物
+			# 	mid_list.append(DiDr[Pst_array[i][3] + 593 ])     # 第一种疾病
+			# 	mid_list.append(DiDr[Pst_array[i][4] + 593])     # 第一种疾病
+			# 	embeddingVector_list.append(mid_list)
+			# if  Pst_array[i][0] == 5:		# r-d-d-d
+			# 	mid_list.append(DiDr[Pst_array[i][2] + 593 ])     # 第一种疾病
+			# 	mid_list.append(DiDr[Pst_array[i][3] + 593 ])     # 第二种疾病
+			# 	mid_list.append(DiDr[Pst_array[i][4] + 593 ])     # 第三种疾病
+			# 	embeddingVector_list.append(mid_list)
 		flag = False
 	return embeddingVector_list
 

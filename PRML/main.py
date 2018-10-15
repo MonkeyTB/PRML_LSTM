@@ -24,7 +24,7 @@ class LSTM(nn.Module):
 	def __init__(self):
 		super(LSTM,self).__init__()
 		self.lstm = nn.LSTM(
-			input_size=906,
+			input_size=1444,
 			hidden_size=4,
 			num_layers=1,
 			batch_first=True,
@@ -45,22 +45,22 @@ loss_func = nn.CrossEntropyLoss()
 # ---------搭建LSTM模型结束----------------
 
 if __name__ == "__main__":
-	DrugSim_list = RFTL.readFileToList("..\data\DrugSimMat", 0)
-	DisSim_list = RFTL.readFileToList("..\data\DiseaseSimMat", 0)
-	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat',1)
-	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat")	#所有1的坐标的list
-	DrugSim_array = RFTL.changeArray(np.array(DrugSim_list),VPT)
-	DisSim_array = RFTL.changeArray(np.array(DisSim_list),VPT)
+	DrugSim_list = RFTL.readFileToList("..\data\drugSim.txt", 0)
+	DisSim_list = RFTL.readFileToList("..\data\disSim.txt", 0)
+	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat.txt',1)
+	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat.txt")	#所有1的坐标的list
+	# DrugSim_array = RFTL.changeArray(np.array(DrugSim_list),VPT)
+	# DisSim_array = RFTL.changeArray(np.array(DisSim_list),VPT)
 	DiDr_array, DiDr_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
 	#存路径部分，到时候在放开，目前先执行一次保存文件
-	# Pst_list = RFTL.FindStepPath(DrugSim_array,DisSim_array,DiDr_array)
+	# Pst_list = RFTL.FindStepPath(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array)
 	# print(shape(np.array(Pst_list)))
 	# np.savetxt('..\data\pst.txt',
 	# 		   np.array(Pst_list), fmt=['%s'] * np.array(Pst_list).shape[1], newline='\n')
 
 	# # 随机游走
 	#DiDrCorr_array = RFTL.RandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.1)
-	DiDr = RFTL.TwoRandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.8)
+	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array,0.9)
 	PstFilePath = '..\data\pst.txt'
 
 	#训练的坐标，包括四分1 和 随机四分0
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
 			for epoch in range(EPOCH):
 				for step, (x) in enumerate(train_loader):
-					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 906)))
+					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
 					b_y = torch.Tensor.long(Variable(y_train))
 					if torch.cuda.is_available():
 						b_x = b_x.cuda()
@@ -111,11 +111,13 @@ if __name__ == "__main__":
 
 	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
 
-	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
+	'''
+
+	# model = torch.load('..\data\lstm_Module.pkl')  #加载模型
 	DiDr_testPathArray = []
 	for i in range(DiDr_testArray.shape[0]):
 		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
 		DiDr_testPathArray.append(mid)
 	DiDr_testPathArray = np.array(DiDr_testPathArray)
-
-
+	print(DiDr_testPathArray)
+	'''
