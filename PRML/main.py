@@ -7,7 +7,7 @@ from numpy import *
 from __init__ import *
 import function as RFTL
 import embeddingVector as EV
-
+import math
 
 import torch
 from torch import nn
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
 	random.shuffle(train_list)
 	# print('train_list',train_list)
-
+	'''
 	train_num = 0
 	for i in range(len(train_list)):
 		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
@@ -113,11 +113,31 @@ if __name__ == "__main__":
 
 	'''
 
-	# model = torch.load('..\data\lstm_Module.pkl')  #加载模型
+	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
 	DiDr_testPathArray = []
 	for i in range(DiDr_testArray.shape[0]):
 		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
 		DiDr_testPathArray.append(mid)
 	DiDr_testPathArray = np.array(DiDr_testPathArray)
-	print(DiDr_testPathArray)
-	'''
+	prediction = np.zeros(DiDr_testPathArray.shape,dtype = float) #存储test后的预测结果
+	for m in range(DiDr_testPathArray.shape[0]):
+		for n in range(DiDr_testPathArray.shape[1]):
+			NoteEmbedding_list = EV.embeddingNoteVector(PstFilePath, DiDr, m, n)
+			if len(NoteEmbedding_list) != 0:
+				print('药物%d'%m,'疾病%d'%n)
+				x_train = []
+				for i in range(len(NoteEmbedding_list)):
+					for j in range(len(NoteEmbedding_list[0]) - 1):
+						x_train.append(NoteEmbedding_list[0][j + 1])
+				train_loader = torch.utils.data.DataLoader(dataset=np.array(x_train), batch_size=4, shuffle=True)
+				p = []
+				for step, (x) in enumerate(train_loader):
+					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
+					if torch.cuda.is_available():
+						b_x = b_x.cuda()
+					predict = model(b_x)
+					p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+				p = np.mean(np.array(p),axis = 0)	#p = [[0.46,0.53]]
+				prediction[m][n] = p[1]
+		np.savetxt('..\data\prediction.txt',
+				   prediction, fmt=['%s'] * prediction.shape[1], newline='\n')
