@@ -16,12 +16,13 @@ import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import datetime
+import torch.nn.functional as F
 torch.manual_seed(1)
 
 startTime,endTime = 0,0
 print(torch.__version__)
 # -------------搭建LSTM模型-------------
-EPOCH = 1
+EPOCH = 3
 class LSTM(nn.Module):
 	def __init__(self):
 		super(LSTM,self).__init__()
@@ -32,13 +33,16 @@ class LSTM(nn.Module):
 			batch_first=True,
 			bidirectional=True,
 		)
-		self.out1 = nn.Linear(400*2,2)
+		self.out1 = nn.Linear(400*2,100)
+		self.out2 = nn.Linear(100,2)
 
 
 	def forward(self,x):
 		# print(torch.typename(x))
 		r_out,(h_n,h_c) = self.lstm(x,None)
 		out = self.out1(r_out[:,-1,:])
+		out = self.out2(out)
+
 
 		return out
 
@@ -65,15 +69,14 @@ if __name__ == "__main__":
 
 	# # 随机游走
 	#DiDrCorr_array = RFTL.RandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.1)
-	startTime = datetime.datetime.now()
+
 	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array,0.9)
 	np.savetxt('..\data\随机游走.txt',
 			   DiDr, fmt=['%s'] * DiDr.shape[1], newline='\n')
-	endTime = datetime.datetime.now()
-	print('随机游走耗时%d'%(endTime - startTime).seconds)
-	PstFilePath = '..\data\pst.txt'
 
-	startTime = datetime.datetime.now()
+	# PstFilePath = '..\data\pst.txt'
+
+
 	#训练的坐标，包括四分1 和 随机四分0
 	train_list = DiDrSplit_list[1] + DiDrSplit_list[2] + DiDrSplit_list[3] + DiDrSplit_list[4]
 
@@ -88,17 +91,16 @@ if __name__ == "__main__":
 
 	random.shuffle(train_list)
 	# print('train_list',train_list)
-	endTime = datetime.datetime.now()
-	print('五倍打乱分数据耗时%d'%(endTime - startTime).seconds)
 	train_num = 0
+
 	for i in range(len(train_list)):
 		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
 		startTime = datetime.datetime.now()
+		PstFilePath = "..\data\PSTF\(" + str(train_list[i][0]) + ")\\" + str(train_list[i][1]) + ".txt"
 		NoteEmbedding_list = EV.embeddingNoteVector( PstFilePath,DiDr ,train_list[i][0],train_list[i][1])
 		endTime = datetime.datetime.now()
 		print('寻找一组节点嵌入向量耗时%d' % (endTime - startTime).seconds)
 		if len(NoteEmbedding_list) != 0:
-			startTime = datetime.datetime.now()
 			train_num += 1
 			print('药物%d'%train_list[i][0],'疾病%d'%train_list[i][1],len(NoteEmbedding_list))
 			x_train = []
@@ -124,13 +126,12 @@ if __name__ == "__main__":
 					loss.backward()
 					optimizer.step()
 					print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
-			endTime = datetime.datetime.now()
-			print('通过LSTM训练一组结点路径耗时%d'%(endTime - startTime).seconds)
-	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
 
-	'''
+	torch.save(lstm,'..\data\lstm_ModuleD4_1.pkl')	#保存模型
 
-	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
+
+
+	model = torch.load('..\data\lstm_ModuleD4_1.pkl')  #加载模型
 	DiDr_testPathArray = []
 	for i in range(DiDr_testArray.shape[0]):
 		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
@@ -139,8 +140,7 @@ if __name__ == "__main__":
 	prediction = np.zeros(DiDr_testPathArray.shape,dtype = float) #存储test后的预测结果
 	for m in range(DiDr_testPathArray.shape[0]):
 		for n in range(DiDr_testPathArray.shape[1]):
-			if DiDr_testArray[m][n] != 1:
-				continue
+			PstFilePath = "..\data\PSTF\(" + str(m) + ")\\" + str(n) + ".txt"
 			NoteEmbedding_list = EV.embeddingNoteVector(PstFilePath, DiDr, m, n)
 			if len(NoteEmbedding_list) != 0:
 				print('药物%d'%m,'疾病%d'%n)
@@ -158,6 +158,5 @@ if __name__ == "__main__":
 					p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 				p = np.mean(np.array(p),axis = 0)	#p = [[0.46,0.53]]
 				prediction[m][n] = p[1]
-		np.savetxt('..\data\prediction.txt',
+		np.savetxt('..\data\predictionD4_1.txt',
 				   prediction, fmt=['%s'] * prediction.shape[1], newline='\n')
-'''

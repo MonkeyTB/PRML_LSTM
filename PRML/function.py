@@ -103,7 +103,7 @@ def ErrAnalysis(A,B):
 	return err
 def Normalize(DR):
 	'''
-	:param DR:待归一化矩阵 
+	:param DR:待归一化矩阵
 	:return: 归一化矩阵
 	'''
 	line_list = np.sum(DR, axis=1)
@@ -113,7 +113,7 @@ def Normalize(DR):
 	return DR
 def RandomWalk(MR,MD,DR,alpha):
 	'''
-	:param MR:593*593 
+	:param MR:593*593
 	:param MD: 313*313
 	:param DR: 313*593
 	:param alpha: 0.1
@@ -154,7 +154,7 @@ def splitArray(MatAFilePath):
 
 def TwoRandomWalk(MR,MD,RD,alpha):
 	'''
-	:param MR:	药物相似性矩阵,np.array 
+	:param MR:	药物相似性矩阵,np.array
 	:param MD:  疾病相似性矩阵，np.array
 	:param RD:  药物疾病关联矩阵，np.array
 	:param alpha:  重启概率 0.8
@@ -187,7 +187,7 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 
 def ChangeArray(A,list,id):
 	'''
-	:param A:原始药物疾病矩阵 
+	:param A:原始药物疾病矩阵
 	:param list: 所有1的坐标的list
 	:param id: 第id作为test，其他四分作为测试
 	:return: 测试矩阵和训练矩阵
