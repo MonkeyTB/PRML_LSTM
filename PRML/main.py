@@ -8,6 +8,7 @@ from __init__ import *
 import function as RFTL
 import embeddingVector as EV
 import math
+import torch.nn.functional as F
 
 import torch
 from torch import nn
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 	random.shuffle(train_list)
 	# print('train_list',train_list)
 	train_num = 0
-
+	'''
 	for i in range(len(train_list)):
 		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
 		startTime = datetime.datetime.now()
@@ -127,19 +128,21 @@ if __name__ == "__main__":
 					optimizer.step()
 					print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
-	torch.save(lstm,'..\data\lstm_ModuleD4_1.pkl')	#保存模型
+	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
 
+	'''
 
-
-	model = torch.load('..\data\lstm_ModuleD4_1.pkl')  #加载模型
+	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
 	DiDr_testPathArray = []
 	for i in range(DiDr_testArray.shape[0]):
 		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
 		DiDr_testPathArray.append(mid)
-	DiDr_testPathArray = np.array(DiDr_testPathArray)
+	DiDr_testPathArray = np.array(DiDr_testPathArray)		#测试中1 变为-1 后的结果
 	prediction = np.zeros(DiDr_testPathArray.shape,dtype = float) #存储test后的预测结果
 	for m in range(DiDr_testPathArray.shape[0]):
 		for n in range(DiDr_testPathArray.shape[1]):
+			if DiDr_testPathArray[m][n] == -1:		#-1表示在train中已经训练过了，测试的时候不测试
+				continue
 			PstFilePath = "..\data\PSTF\(" + str(m) + ")\\" + str(n) + ".txt"
 			NoteEmbedding_list = EV.embeddingNoteVector(PstFilePath, DiDr, m, n)
 			if len(NoteEmbedding_list) != 0:
@@ -155,8 +158,9 @@ if __name__ == "__main__":
 					if torch.cuda.is_available():
 						b_x = b_x.cuda()
 					predict = model(b_x)
-					p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+					# p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+					p.append(F.softmax(predict[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 				p = np.mean(np.array(p),axis = 0)	#p = [[0.46,0.53]]
 				prediction[m][n] = p[1]
-		np.savetxt('..\data\predictionD4_1.txt',
+		np.savetxt('..\data\prediction.txt',
 				   prediction, fmt=['%s'] * prediction.shape[1], newline='\n')

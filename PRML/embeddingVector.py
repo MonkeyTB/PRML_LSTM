@@ -73,12 +73,12 @@ def embeddingNoteVector(FilePath,DiDr,r,d):
 			flag = True
 		if flag == True:
 			mid_list.append(DiDr[ Pst_array[i][1] ])  # 第一种药物
-			if  Pst_array[i][0] == 0:		# r-r-d
+			if  Pst_array[i][0] == 1:		# r-r-d
 				mid_list.append( DiDr[ Pst_array[i][2] ])	#第二种药物
 				mid_list.append( DiDr[ Pst_array[i][3] + 763 ])	#第一种疾病
 				mid_list.append( [0]*DiDr.shape[0] )					#最后元素补0
 				embeddingVector_list.append(mid_list)
-			if  Pst_array[i][0] == 1:		# r-d-d
+			if  Pst_array[i][0] == 2:		# r-d-d
 				mid_list.append(DiDr[ Pst_array[i][2] + 763 ])	#第一种疾病
 				mid_list.append(DiDr[ Pst_array[i][3] + 763 ])	#第二种疾病
 				mid_list.append([0] * DiDr.shape[0] )  # 最后元素补0
