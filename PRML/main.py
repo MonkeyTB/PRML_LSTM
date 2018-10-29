@@ -23,28 +23,23 @@ torch.manual_seed(1)
 startTime,endTime = 0,0
 print(torch.__version__)
 # -------------搭建LSTM模型-------------
-EPOCH = 3
+EPOCH = 1
 class LSTM(nn.Module):
 	def __init__(self):
 		super(LSTM,self).__init__()
 		self.lstm = nn.LSTM(
 			input_size=1444,
-			hidden_size=400,
+			hidden_size=100,
 			num_layers=1,
 			batch_first=True,
 			bidirectional=True,
 		)
-		self.out1 = nn.Linear(400*2,100)
-		self.out2 = nn.Linear(100,2)
-
-
+		self.out1 = nn.Linear(100*2,2)
+		# self.out2 = nn.Linear(100,2)
 	def forward(self,x):
-		# print(torch.typename(x))
 		r_out,(h_n,h_c) = self.lstm(x,None)
 		out = self.out1(r_out[:,-1,:])
-		out = self.out2(out)
-
-
+		# out = self.out2(out)
 		return out
 
 lstm = LSTM()
@@ -59,8 +54,7 @@ if __name__ == "__main__":
 	DisSim_list = RFTL.readFileToList("..\data\disSim.txt", 0)
 	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat.txt',1)
 	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat.txt")	#所有1的坐标的list
-	# DrugSim_array = RFTL.changeArray(np.array(DrugSim_list),VPT)
-	# DisSim_array = RFTL.changeArray(np.array(DisSim_list),VPT)
+
 	DiDr_array, DiDr_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
 	#存路径部分，到时候在放开，目前先执行一次保存文件
 	# Pst_list = RFTL.FindStepPath(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array)
@@ -68,15 +62,9 @@ if __name__ == "__main__":
 	# np.savetxt('..\data\pst.txt',
 	# 		   np.array(Pst_list), fmt=['%s'] * np.array(Pst_list).shape[1], newline='\n')
 
-	# # 随机游走
-	#DiDrCorr_array = RFTL.RandomWalk(DrugSim_array,DisSim_array,DiDr_array,0.1)
-
 	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array,0.9)
 	np.savetxt('..\data\随机游走.txt',
 			   DiDr, fmt=['%s'] * DiDr.shape[1], newline='\n')
-
-	# PstFilePath = '..\data\pst.txt'
-
 
 	#训练的坐标，包括四分1 和 随机四分0
 	train_list = DiDrSplit_list[1] + DiDrSplit_list[2] + DiDrSplit_list[3] + DiDrSplit_list[4]
@@ -91,9 +79,8 @@ if __name__ == "__main__":
 			break
 
 	random.shuffle(train_list)
-	# print('train_list',train_list)
 	train_num = 0
-	'''
+
 	for i in range(len(train_list)):
 		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
 		startTime = datetime.datetime.now()
@@ -126,11 +113,10 @@ if __name__ == "__main__":
 					optimizer.zero_grad()
 					loss.backward()
 					optimizer.step()
-					print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
+					print(step,'Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
 	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
 
-	'''
 
 	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
 	DiDr_testPathArray = []
@@ -141,8 +127,9 @@ if __name__ == "__main__":
 	prediction = np.zeros(DiDr_testPathArray.shape,dtype = float) #存储test后的预测结果
 	for m in range(DiDr_testPathArray.shape[0]):
 		for n in range(DiDr_testPathArray.shape[1]):
-			if DiDr_testPathArray[m][n] == -1:		#-1表示在train中已经训练过了，测试的时候不测试
-				continue
+			# if DiDr_testPathArray[m][n] == -1:		#-1表示在train中已经训练过了，测试的时候不测试
+			# 	prediction[m][n] = 0.0
+			# 	continue
 			PstFilePath = "..\data\PSTF\(" + str(m) + ")\\" + str(n) + ".txt"
 			NoteEmbedding_list = EV.embeddingNoteVector(PstFilePath, DiDr, m, n)
 			if len(NoteEmbedding_list) != 0:

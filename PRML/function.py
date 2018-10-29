@@ -13,18 +13,22 @@ def readFileToList (FilePath,Type):
 	:param Type: 1：按int类型读，0：按float类型读
 	:return: 读取文件内容的list
 	'''
-	f = open(FilePath,"r")
-	line = f.readline()
-	data_list = []
-	while line:
-		if Type == 1:
-			num = list(map(int ,line.split()))
-		else:
-			num = list(map(float, line.split()))
-		data_list.append(num)
+	try:
+		f = open(FilePath,"r")
 		line = f.readline()
-	f.close()
-	return data_list
+		data_list = []
+		while line:
+			if Type == 1:
+				num = list(map(int ,line.split()))
+			else:
+				num = list(map(float, line.split()))
+			data_list.append(num)
+			line = f.readline()
+		f.close()
+		return data_list
+	except IOError:
+		print('File is not found')
+		return []
 def changeArray(A,VPT):
 	'''
 	:param A: 待改变的数组
@@ -230,3 +234,6 @@ def softmax1(x):
 	# return x
 def softmax2(x):
 	return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+def NodeAttention():
+	pass
