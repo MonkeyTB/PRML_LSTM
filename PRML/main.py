@@ -56,14 +56,23 @@ class Prml(nn.Module):
 		super(Prml,self).__init__()
 		self.BiLSTM = Atten.LSTM()
 		self.Attention_Node = Atten.Attention()
-	def forward(self, x):
-		out,(h_n,h_c) = self.BiLSTM(x)
-		h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
-						   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
-			torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
-					 torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
-		y_i = self.Attention_Node(h.view(4,100))
-		return y_i
+		self.Attention_Path = Atten.Path_Attention()
+	def forward(self, train_loader):
+		for step, (x) in enumerate(train_loader):
+			b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
+			if torch.cuda.is_available():
+				b_x = b_x.cuda()
+			out,(h_n,h_c) = self.BiLSTM(b_x)
+			h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
+							   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
+							torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
+						 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
+			if step == 0:
+				y_i = self.Attention_Node(h.view(4,100))
+			else:
+				y_i = torch.cat( (y_i,self.Attention_Node(h.view(4,100))),0)
+		L = self.Attention_Path(y_i,step+1)			#(step+1)*100  step+1为路径条数
+		return L
 prml = Prml()
 if torch.cuda.is_available():
 
@@ -179,37 +188,22 @@ if __name__ == "__main__":
 
 			y_train = torch.Tensor(np.array(y_train))
 
-
+			Node_Node_path_num = len(x_train)
 
 			for epoch in range(EPOCH):
-
-				for step, (x) in enumerate(train_loader):
-
-					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
-
-					b_y = torch.Tensor.long(Variable(y_train))
-
-					if torch.cuda.is_available():
-
-						b_x = b_x.cuda()
-
-						b_y = b_y.cuda()
-
-					output = prml(b_x)
-
-					loss = loss_func(output, b_y)
-
-					optimizer.zero_grad()
-
-					loss.backward()
-
-					optimizer.step()
-
-					print(step,'Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
+				b_y = torch.Tensor.long(Variable(y_train))
+				if torch.cuda.is_available():
+					b_y = b_y.cuda()
+				output = prml(train_loader)
+				loss = loss_func(output, b_y)
+				optimizer.zero_grad()
+				loss.backward()
+				optimizer.step()
+				print('Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
 
 
-	torch.save(lstm,'..\data\lstm_Module.pkl')	#保存模型
+	torch.save(prml,'..\data\lstm_Module.pkl')	#保存模型
 
 
 

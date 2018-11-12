@@ -37,10 +37,24 @@ class Attention(nn.Module):			#结点attention
 		self.u = nn.Linear(self.outputsize,1,bias=False)			#过h(n)的线性层
 		init.xavier_uniform(self.u.weight)
 	def forward(self,h_hidden):
-		ipdb.set_trace()
+		# ipdb.set_trace()
 		temp_node = self.node(h_hidden)	#W(hs)*h(ij)   4*10
 		temp_node = F.tanh(temp_node)	#tanh[W(hs)*h(ij)]
 		s_ij = self.u(temp_node)		#h(n)tanh[W(hs)*h(ij)]
 		alpha = F.softmax(s_ij)			#4*1
 		return torch.mm(alpha.view(1,4),h_hidden)
-
+class Path_Attention(nn.Module):
+	def __init__(self,inputsize = 100,outputsize = 10):
+		super(Path_Attention,self).__init__()
+		self.inputsize = inputsize
+		self.outputsize = outputsize
+		self.Path = nn.Linear(self.inputsize,self.outputsize,bias = False)
+		init.xavier_uniform(self.Path.weight)
+		self.u = nn.Linear(self.outputsize,1,bias=False)
+		init.xavier_uniform(self.u.weight)
+	def forward(self,hidden,num):
+		# ipdb.set_trace()
+		temp_path = self.Path(hidden)		#num * 100
+		temp_path = F.tanh(temp_path)		#tanh(num*100)
+		g_ij = self.u(temp_path)			#h(p)tanh[W(ys)*yi]
+		return torch.mm(g_ij.view(1, num), hidden)
