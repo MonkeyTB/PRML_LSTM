@@ -16,15 +16,16 @@ class LSTM(nn.Module):
 			input_size=1444,
 			hidden_size=100,
 			num_layers=1,
-			batch_first=False,
+			batch_first=True,
 			bidirectional=True,
 		)
-		self.out1 = nn.Linear(100*2*4 ,2)
-
+		# self.out1 = nn.Linear(100*2*4 ,2)
+		self.out1 = nn.Linear(100 * 2, 2)
 	def forward(self,x):
 
 		r_out,(h_n,h_c) = self.lstm(x,None)
-		out = self.out1(r_out.view(1,4*200))
+		# out = self.out1(r_out.view(1,4*200))
+		out = self.out1(r_out[:,-1,:])
 		return out,(h_n,h_c)
 
 class Attention(nn.Module):			#结点attention

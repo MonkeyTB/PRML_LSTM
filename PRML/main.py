@@ -63,14 +63,17 @@ class Prml(nn.Module):
 			if torch.cuda.is_available():
 				b_x = b_x.cuda()
 			out,(h_n,h_c) = self.BiLSTM(b_x)
-			h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
-							   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
-							torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
-						 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
+
+			# h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
+			# 				   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
+			# 				torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
+			# 			 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
+			h = torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0))
 			if step == 0:
-				y_i = self.Attention_Node(h.view(4,100))
+				y_i = h#self.Attention_Node(h.view(4,100))
 			else:
-				y_i = torch.cat( (y_i,self.Attention_Node(h.view(4,100))),0)
+				y_i = torch.cat( (y_i,h),0)#self.Attention_Node(h.view(4,100))),0)
+		# ipdb.set_trace()
 		L = self.Attention_Path(y_i,step+1)			#(step+1)*100  step+1为路径条数
 		return L
 prml = Prml()
@@ -259,7 +262,7 @@ if __name__ == "__main__":
 
 					p.append(F.softmax(predict[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
-				p = np.mean(np.array(p),axis = 0)	#p = [[0.46,0.53]]
+				p = np.sum(np.array(p),axis = 0)	#p = [[0.46,0.53]]
 
 				prediction[m][n] = p[1]
 

@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
 					p.append(F.softmax(predict[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
-				p = np.mean(np.array(p),axis = 0)	#p = [[0.46,0.53]]
+				p = np.sum(np.array(p),axis = 0)	#p = [[0.46,0.53]]
 
 				prediction[m][n] = p[1]
 

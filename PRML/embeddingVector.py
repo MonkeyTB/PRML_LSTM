@@ -7,6 +7,8 @@ import numpy as np
 from numpy import *
 import function as RFTL
 
+# import ipdb
+
 
 def embeddingNoteVector(FilePath,DiDr,r,d):
 	'''
@@ -65,9 +67,11 @@ def embeddingNoteVector(FilePath,DiDr,r,d):
 	embeddingVector_list = []
 	Pst_array = np.array( RFTL.readFileToList(FilePath, 1) )
 	flag = False
+
+
+
 	for i in range(Pst_array.shape[0]):
 		mid_list = []
-		# if Pst_array[i][0] == 0 or Pst_array[i][0] == 1:
 		if Pst_array[i][1] == r and  Pst_array[i][3] == d:
 			mid_list.append([Pst_array[i][1], Pst_array[i][3]])  # 起始药物ID和终止疾病ID
 			flag = True
