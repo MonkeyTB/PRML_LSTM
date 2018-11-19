@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 # import  ipdb
 from numpy import *
-
+# import  ipdb
 class LSTM(nn.Module):
 	def __init__(self):
 		super(LSTM,self).__init__()
@@ -72,17 +72,23 @@ class CNN(nn.Module):
 				padding=1,
 			),
 			nn.ReLU(),
-			nn.MaxPool2d(kernel_size=(2,1))
+			nn.MaxPool2d(kernel_size=(1,2))
 		)
 		self.conv2=nn.Sequential(
 			nn.Conv2d(16,32,(3,20),1,1),
 			nn.ReLU(),
-			nn.MaxPool2d((2,1))
+			nn.MaxPool2d((1,2))
 		)
-		self.out = nn.Linear(32,2)
+		self.out = nn.Linear(22272,2)
 	def forward(self,x):
-		x = self.conv1(x)
-		x = self.conv2(x)
+
+		x = self.conv1(x.unsqueeze(0))		#torch.Size([1, 16, 2, 713])
+		x = self.conv2(x)					#torch.Size([1, 32, 2, 348])
 		x = x.view(x.size(0),-1)
 		output = self.out(x)
 		return output
+cnn = CNN()
+if torch.cuda.is_available():
+	cnn.cuda()
+optimizer = torch.optim.Adam(cnn.parameters(),lr = 0.001)
+loss_func = nn.CrossEntropyLoss()
