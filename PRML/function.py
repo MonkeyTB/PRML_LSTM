@@ -7,9 +7,6 @@ from __init__ import *
 import numpy.linalg as la
 import copy
 
-import torch
-from torch import nn
-
 def readFileToList (FilePath,Type):
 	'''
 	:param FilePath:读取文件路径 
@@ -171,6 +168,8 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 	M1 = np.hstack((MR,RD))
 	M2 = np.hstack((RD.T,MD))
 	M = np.vstack((M1,M2)) #拼接后的矩阵
+	return M
+	'''
 	# 对M进行行归一化
 	sum_list = np.sum(M, axis=1)
 	for i in range(M.shape[0]):
@@ -191,7 +190,7 @@ def TwoRandomWalk(MR,MD,RD,alpha):
 	# MD = P[593:,593:]
 	# return MR,MD,RD
 	return P
-
+	'''
 def ChangeArray(A,list,id):
 	'''
 	:param A:原始药物疾病矩阵
@@ -237,19 +236,3 @@ def softmax1(x):
 	# return x
 def softmax2(x):
 	return np.exp(x) / np.sum(np.exp(x), axis=0)
-
-def FindMaxPath_num(i,j):
-	try:
-		PstFilePath = "..\data\PSTF\(" + str(i) + ")\\" + str(j) + ".txt"
-		count = len(open(PstFilePath,'r').readlines())
-	except IOError:
-		count = 0
-	return count+1
-# #START增加判断路径最大数
-# MAXPATH_NUM = 0
-# for i in range(len(train_list)):
-# 	count = RFTL.FindMaxPath_num(train_list[i][0],train_list[i][1])
-# 	if count > MAXPATH_NUM:
-# 		MAXPATH_NUM = count
-#
-# #END增加判断路径最大数

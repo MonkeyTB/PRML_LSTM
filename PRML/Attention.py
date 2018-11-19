@@ -6,13 +6,13 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-import  ipdb
+# import  ipdb
 from numpy import *
 
 class LSTM(nn.Module):
 	def __init__(self):
 		super(LSTM,self).__init__()
-		self.lstm = nn.LSTM(
+		self.lstm = nn.GRU(
 			input_size=1444,
 			hidden_size=100,
 			num_layers=1,
@@ -23,10 +23,10 @@ class LSTM(nn.Module):
 		self.out1 = nn.Linear(100 * 2, 2)
 	def forward(self,x):
 
-		r_out,(h_n,h_c) = self.lstm(x,None)
+		r_out,h_n = self.lstm(x,None)
 		# out = self.out1(r_out.view(1,4*200))
 		out = self.out1(r_out[:,-1,:])
-		return out,(h_n,h_c)
+		return out,h_n
 
 class Attention(nn.Module):			#结点attention
 	def __init__(self,inputsize=100,outputsize=10):
@@ -59,3 +59,30 @@ class Path_Attention(nn.Module):
 		temp_path = F.tanh(temp_path)		#tanh(num*100)
 		g_ij = self.u(temp_path)			#h(p)tanh[W(ys)*yi]
 		return torch.mm(g_ij.view(1, num), hidden)
+
+class CNN(nn.Module):
+	def __init__(self):
+		super(CNN,self).__init__()
+		self.conv1=nn.Sequential(
+			nn.Conv2d(
+				in_channels=1,
+				out_channels=16,
+				kernel_size=(3,20),
+				stride=1,
+				padding=1,
+			),
+			nn.ReLU(),
+			nn.MaxPool2d(kernel_size=(2,1))
+		)
+		self.conv2=nn.Sequential(
+			nn.Conv2d(16,32,(3,20),1,1),
+			nn.ReLU(),
+			nn.MaxPool2d((2,1))
+		)
+		self.out = nn.Linear(32,2)
+	def forward(self,x):
+		x = self.conv1(x)
+		x = self.conv2(x)
+		x = x.view(x.size(0),-1)
+		output = self.out(x)
+		return output

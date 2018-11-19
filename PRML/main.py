@@ -20,7 +20,7 @@ import Attention as Atten
 
 import math
 
-import ipdb
+# import ipdb
 
 
 
@@ -62,18 +62,21 @@ class Prml(nn.Module):
 			b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
 			if torch.cuda.is_available():
 				b_x = b_x.cuda()
-			out,(h_n,h_c) = self.BiLSTM(b_x)
-
+			# out,(h_n,h_c) = self.BiLSTM(b_x)
+			out,h_n = self.BiLSTM(b_x)
+			#bitch为4
 			# h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
 			# 				   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
 			# 				torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
 			# 			 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
+			#GRU
 			h = torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0))
+			#不计算out，只用h_n
+			# h = torch.stack((h_n[0][0], h_n[1][0]), dim=0).view(1,200)
 			if step == 0:
 				y_i = h#self.Attention_Node(h.view(4,100))
 			else:
 				y_i = torch.cat( (y_i,h),0)#self.Attention_Node(h.view(4,100))),0)
-		# ipdb.set_trace()
 		L = self.Attention_Path(y_i,step+1)			#(step+1)*100  step+1为路径条数
 		return L
 prml = Prml()
