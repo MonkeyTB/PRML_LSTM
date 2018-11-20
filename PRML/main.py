@@ -228,9 +228,7 @@ if __name__ == "__main__":
 
 
 
-	'''
-	#------------------test GRU----------------------------------------	
-	'''
+
 	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
 
 	DiDr_testPathArray = []
