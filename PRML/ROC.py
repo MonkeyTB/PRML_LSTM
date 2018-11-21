@@ -43,7 +43,7 @@ def PlotRoc(Predict_array,test_array,TPR_Data,FPR_Data,PRE_Data):
 	return TPR_Data,FPR_Data,PRE_Data
 x_FPR,y_TPR,y_PRE = [],[],[]
 predict_list = RFTL.readFileToList('..\data\prediction.txt',0)
-test_list = RFTL.readFileToList('..\data\第一份测试数据.txt',1)
+test_list = RFTL.readFileToList('..\data\DiDrAMat.txt',1)
 TPR,FPR,PRE = PlotRoc(np.array(predict_list),np.array(test_list),[],[],[])
 x_FPR.append(np.array(FPR).sum(axis=0) / np.array(FPR).shape[0])
 y_TPR.append(np.array(TPR).sum(axis=0) / np.array(TPR).shape[0])

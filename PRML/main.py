@@ -120,11 +120,6 @@ if __name__ == "__main__":
 
 	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array,0.9)
 
-	np.savetxt('..\data\随机游走.txt',
-
-			   DiDr, fmt=['%s'] * DiDr.shape[1], newline='\n')
-
-
 
 	#训练的坐标，包括四分1 和 随机四分0
 
@@ -159,17 +154,12 @@ if __name__ == "__main__":
 
 		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
 
-		startTime = datetime.datetime.now()
 
 		PstFilePath = "..\data\PSTF\(" + str(train_list[i][0]) + ")\\" + str(train_list[i][1]) + ".txt"
 
 		NoteEmbedding_list = EV.embeddingNoteVector( PstFilePath,DiDr ,train_list[i][0],train_list[i][1])
 
 		CnnEmbedding_list = EV.CnnEmbeddingVector(DiDr,train_list[i][0],train_list[i][1])
-
-		endTime = datetime.datetime.now()
-
-		print('寻找一组节点嵌入向量耗时%d' % (endTime - startTime).seconds)
 
 		if len(NoteEmbedding_list) != 0 or len(CnnEmbedding_list) != 0:
 
@@ -195,14 +185,11 @@ if __name__ == "__main__":
 
 			y_train = torch.Tensor(np.array(y_train))
 
-			Node_Node_path_num = len(x_train)
-
+			# Node_Node_path_num = len(x_train)
+			b_y = torch.Tensor.long(Variable(y_train))
+			if torch.cuda.is_available():
+				b_y = b_y.cuda()
 			for epoch in range(EPOCH):
-
-				b_y = torch.Tensor.long(Variable(y_train))
-				if torch.cuda.is_available():
-					b_y = b_y.cuda()
-
 				#----------CNN训练----------------------
 				cnn_x = torch.Tensor(torch.Tensor(np.array(CnnEmbedding_list)))
 				if torch.cuda.is_available():
@@ -213,6 +200,8 @@ if __name__ == "__main__":
 				cnn_loss.backward()
 				Atten.optimizer.step()
 				print('CNN','Epoch:', epoch, '|train loss:%.4f' % cnn_loss.data[0])
+
+			for epoch in range(EPOCH):
 				#----------GRU训练----------------------
 				if len(NoteEmbedding_list) != 0:
 					output = prml(train_loader)
@@ -223,13 +212,15 @@ if __name__ == "__main__":
 					print('GRU','Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
 
 
-	torch.save(prml,'..\data\lstm_Module.pkl')			#保存LSTM模型
-	torch.save(Atten.cnn,'..\data\cnn_Module_1.pkl')		#保存CNN模型
+	torch.save(prml,'..\data\gru_Module.pkl')			#保存LSTM模型
+	torch.save(Atten.cnn,'..\data\cnn_Module.pkl')		#保存CNN模型
 
 
 
-
-	model = torch.load('..\data\lstm_Module.pkl')  #加载模型
+	'''
+	#------------------test GRU----------------------------------------	
+	'''
+	model = torch.load('..\data\gru_Module.pkl')  #加载模型
 
 	DiDr_testPathArray = []
 
@@ -273,11 +264,9 @@ if __name__ == "__main__":
 
 						b_x = b_x.cuda()
 
-					predict = model(b_x)
+					predict_gru = model(b_x)
 
-					# p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
-
-					p.append(F.softmax(predict[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+					p.append(F.softmax(predict_gru[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
 				p = np.sum(np.array(p),axis = 0)	#p = [[0.46,0.53]]
 
@@ -285,14 +274,14 @@ if __name__ == "__main__":
 
 				print('药物%d'%m,'疾病%d'%n,p[1])
 
-		np.savetxt('..\data\prediction_lstm.txt',
+		np.savetxt('..\data\prediction_gru.txt',
 
 				   prediction_gru, fmt=['%s'] * prediction_gru.shape[1], newline='\n')
 
 	'''
 	#------------------test CNN----------------------------------------	
 	'''
-	model_cnn = torch.load('..\data\cnn_Module_1.pkl')  # 加载模型
+	model_cnn = torch.load('..\data\cnn_Module.pkl')  # 加载模型
 
 	DiDr_testCnnArray = []
 
@@ -316,9 +305,9 @@ if __name__ == "__main__":
 			if torch.cuda.is_available():
 				cnn_x = cnn_x.cuda()
 
-			predict = model_cnn(cnn_x.unsqueeze(0))
+			predict_cnn = model_cnn(cnn_x.unsqueeze(0))
 
-			p_cnn=F.softmax(predict) # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+			p_cnn=F.softmax(predict_cnn) # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
 			prediction_CNN[m][n] = p_cnn[0,1]
 
