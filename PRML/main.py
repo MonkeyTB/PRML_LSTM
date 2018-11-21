@@ -106,6 +106,9 @@ if __name__ == "__main__":
 
 	DiDr_array, DiDr_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
 
+	np.savetxt('..\data\第一份训练数据.txt',DiDr_array, fmt=['%s'] * DiDr_array.shape[1], newline='\n')
+	np.savetxt('..\data\第一份测试数据.txt',DiDr_testArray, fmt=['%s'] * DiDr_testArray.shape[1], newline='\n')
+
 	#存路径部分，到时候在放开，目前先执行一次保存文件
 
 	# Pst_list = RFTL.FindStepPath(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array)
