@@ -5,13 +5,13 @@
 import numpy as np
 import function as FUN
 
-FileC_Path = '..\data\prediction_CNN.txt'
-FileG_Path = '..\data\prediction_lstm.txt'
+FileC_Path = '..\data\Batch50E10LR0.001.pkl.npy'
+FileG_Path = '..\data\GRUM.txt'
 
-cnn_list = FUN.readFileToList(FileC_Path,0)
+cnn_list = np.load(FileC_Path)
 gru_list = FUN.readFileToList(FileG_Path,0)
 
-predict = 0.9*np.array(cnn_list) + 0.1*np.array(gru_list)
+predict = 0.6*cnn_list + 0.4*np.array(gru_list)
 
 np.savetxt('..\data\prediction.txt',
 

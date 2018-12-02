@@ -150,6 +150,7 @@ def splitArray(MatAFilePath):
 		for j in range(icols):
 			if (int(Data_array[i][j]) == 1):
 				mid_list.append((i, j))
+	random.seed(1)
 	random.shuffle(mid_list)  # 打乱排序
 
 	WorkData_list = [mid_list[i:i + (len(mid_list) // 5 + 1)] for i in

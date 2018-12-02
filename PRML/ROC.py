@@ -8,7 +8,6 @@ from pylab import *
 import function as RFTL
 from sklearn.metrics import auc
 
-
 def PlotRoc(Predict_array,train_array,test_array,TPR_Data,FPR_Data,PRE_Data):
 	'''
 	:param Predict_array:预测结果 
@@ -19,16 +18,17 @@ def PlotRoc(Predict_array,train_array,test_array,TPR_Data,FPR_Data,PRE_Data):
 	:param PRE_Data: 返回的结果
 	:return: TPR、FPR、PRE
 	'''
+
 	Predict_array,test_array  = asarray(Predict_array),asarray(test_array)
 	#将预测结果中，训练集中1的位置将其概率置0
 	for i in range(Predict_array.shape[0]):
 		for j in range(Predict_array.shape[1]):
 			if train_array[i][j] == 1:
-				Predict_array[i][j] = 0
+				Predict_array[i][j] = -1
 	#统计Prediction中每行0的个数
 	zero_list = []
 	for i in range(Predict_array.shape[0]):
-		zero_list.append( Predict_array[i].tolist().count(0) )
+		zero_list.append( Predict_array[i].tolist().count(-1) )
 
 	maxValue = zero_list[ zero_list.index(max(zero_list)) ]		#zero_list.index(max(zero_list))返回列表最大元素的ID
 
@@ -70,16 +70,18 @@ def PlotRoc(Predict_array,train_array,test_array,TPR_Data,FPR_Data,PRE_Data):
 
 	return TPR_Data,FPR_Data,PRE_Data
 x_FPR,y_TPR,y_PRE = [],[],[]
+# predict_list = np.load('..\data\Batch50E10LR0.001.pkl.npy')
 predict_list = RFTL.readFileToList('..\data\prediction.txt',0)
 train_list = RFTL.readFileToList('..\data\第一份训练数据.txt',1)
 test_list = RFTL.readFileToList('..\data\第一份测试数据.txt',1)
 
 TPR,FPR,PRE = PlotRoc(np.array(predict_list),np.array(train_list),np.array(test_list),[],[],[])
+# TPR,FPR,PRE = PlotRoc(predict_list,np.array(train_list),np.array(test_list),[],[],[])
 x_FPR.append(np.array(FPR).sum(axis=0) / np.array(FPR).shape[0])
 y_TPR.append(np.array(TPR).sum(axis=0) / np.array(TPR).shape[0])
 y_PRE.append(np.array(PRE).sum(axis=0) / np.array(PRE).shape[0])
 print('ROC_AUC:', auc(x_FPR[0], y_TPR[0]))
-print('PR_AUC:',  auc(y_TPR[0],y_PRE[0]))
+print('PR_AUC:',  auc(y_TPR[0],y_PRE[0])+y_TPR[0][0]*y_PRE[0][0])
 plot(x_FPR[0], y_TPR[0], "r")
 plot(y_TPR[0],y_PRE[0],"b")
 show()

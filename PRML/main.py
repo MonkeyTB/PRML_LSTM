@@ -1,95 +1,107 @@
-#_Author_:Monkey
+# _Author_:Monkey
 
-#!/usr/bin/env python
 
-#-*- coding:utf-8 -*-
+# !/usr/bin/env python
 
+
+# -*- coding:utf-8 -*-
 
 
 import numpy as np
-
 from numpy import *
-
 from __init__ import *
-
 import function as RFTL
-
 import embeddingVector as EV
-
 import Attention as Atten
-
 import math
-
-# import ipdb
-
-
-
 import torch
-
 from torch import nn
-
 from torch.autograd import Variable
-
 import torchvision.datasets as dsets
-
 import torchvision.transforms as transforms
-
 import matplotlib.pyplot as plt
-
 import datetime
-
 import torch.nn.functional as F
+import batch_cnn as BATCHCNN
 
 torch.manual_seed(1)
 
-
-
-startTime,endTime = 0,0
+startTime, endTime = 0, 0
 
 print(torch.__version__)
 
 # -------------搭建LSTM模型-------------
 
+
 EPOCH = 10
+
+
 class Prml(nn.Module):
-	def __init__(self):
-		super(Prml,self).__init__()
-		self.BiLSTM = Atten.LSTM()
-		self.Attention_Node = Atten.Attention()
-		self.Attention_Path = Atten.Path_Attention()
-	def forward(self, train_loader):
-		for step, (x) in enumerate(train_loader):
-			b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
-			if torch.cuda.is_available():
-				b_x = b_x.cuda()
-			# out,(h_n,h_c) = self.BiLSTM(b_x)
-			out,h_n = self.BiLSTM(b_x)
-			#bitch为4
-			# h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
-			# 				   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
-			# 				torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
-			# 			 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
-			#GRU
-			h = torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0))
-			#不计算out，只用h_n
-			# h = torch.stack((h_n[0][0], h_n[1][0]), dim=0).view(1,200)
-			if step == 0:
-				y_i = h#self.Attention_Node(h.view(4,100))
-			else:
-				y_i = torch.cat( (y_i,h),0)#self.Attention_Node(h.view(4,100))),0)
-		L = self.Attention_Path(y_i,step+1)			#(step+1)*100  step+1为路径条数
-		return L
+
+    def __init__(self):
+
+        super(Prml, self).__init__()
+
+        self.BiLSTM = Atten.LSTM()
+
+        self.Attention_Node = Atten.Attention()
+
+        self.Attention_Path = Atten.Path_Attention()
+
+    def forward(self, train_loader):
+
+        for step, (x) in enumerate(train_loader):
+
+            b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
+
+            if torch.cuda.is_available():
+                b_x = b_x.cuda()
+
+            # out,(h_n,h_c) = self.BiLSTM(b_x)
+
+            out, h_n = self.BiLSTM(b_x)
+
+            # bitch为4
+
+            # h = torch.stack( (torch.stack ( (torch.mm(out, torch.stack((h_n[0][0],h_n[1][0]),dim = 0)).view(-1,100),
+
+            # 				   torch.mm(out, torch.stack((h_n[0][1], h_n[1][1]), dim=0)).view(-1, 100)),dim = 0) ,	#默认为0,h(1*100)
+
+            # 				torch.stack((torch.mm(out, torch.stack((h_n[0][2], h_n[1][2]), dim=0)).view(-1, 100),
+
+            # 			 		torch.mm(out, torch.stack((h_n[0][3], h_n[1][3]), dim=0)).view(-1, 100)), dim=0) ),dim = 0)
+
+            # GRU
+
+            h = torch.mm(out, torch.stack((h_n[0][0], h_n[1][0]), dim=0))
+
+            # 不计算out，只用h_n
+
+            # h = torch.stack((h_n[0][0], h_n[1][0]), dim=0).view(1,200)
+
+            if step == 0:
+
+                y_i = h  # self.Attention_Node(h.view(4,100))
+
+            else:
+
+                y_i = torch.cat((y_i, h), 0)  # self.Attention_Node(h.view(4,100))),0)
+
+        L = self.Attention_Path(y_i, step + 1)  # (step+1)*100  step+1为路径条数
+
+        return L
+
+
 prml = Prml()
+
 if torch.cuda.is_available():
+    prml.cuda()
 
-	prml.cuda()
-
-optimizer = torch.optim.Adam(prml.parameters(),lr = 0.001)
+optimizer = torch.optim.Adam(prml.parameters(), lr=0.001)
 
 loss_func = nn.CrossEntropyLoss()
 
 # ---------搭建LSTM模型结束----------------
-
 
 
 if __name__ == "__main__":
@@ -98,18 +110,15 @@ if __name__ == "__main__":
 
 	DisSim_list = RFTL.readFileToList("..\data\disSim.txt", 0)
 
-	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat.txt',1)
+	DiDr_list = RFTL.readFileToList('..\data\DiDrAMat.txt', 1)
 
-	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat.txt")	#所有1的坐标的list
-
-
+	DiDrSplit_list = RFTL.splitArray("..\data\DiDrAMat.txt")  # 所有1的坐标的list
 
 	DiDr_array, DiDr_testArray = RFTL.ChangeArray(np.array(DiDr_list), DiDrSplit_list, 0)  # 第一份1做test
+	np.savetxt('..\data\第一份训练数据.txt', DiDr_array, fmt=['%s'] * DiDr_array.shape[1], newline='\n')
+	np.savetxt('..\data\第一份测试数据.txt', DiDr_testArray, fmt=['%s'] * DiDr_testArray.shape[1], newline='\n')
 
-	np.savetxt('..\data\第一份训练数据.txt',DiDr_array, fmt=['%s'] * DiDr_array.shape[1], newline='\n')
-	np.savetxt('..\data\第一份测试数据.txt',DiDr_testArray, fmt=['%s'] * DiDr_testArray.shape[1], newline='\n')
-
-	#存路径部分，到时候在放开，目前先执行一次保存文件
+	# 存路径部分，到时候在放开，目前先执行一次保存文件
 
 	# Pst_list = RFTL.FindStepPath(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array)
 
@@ -119,123 +128,93 @@ if __name__ == "__main__":
 
 	# 		   np.array(Pst_list), fmt=['%s'] * np.array(Pst_list).shape[1], newline='\n')
 
+	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list), np.array(DisSim_list), DiDr_array, 0.9)
 
-
-	DiDr = RFTL.TwoRandomWalk(np.array(DrugSim_list),np.array(DisSim_list),DiDr_array,0.9)
-
-
-	#训练的坐标，包括四分1 和 随机四分0
+	# 训练的坐标，包括四分1 和 随机四分0
 
 	train_list = DiDrSplit_list[1] + DiDrSplit_list[2] + DiDrSplit_list[3] + DiDrSplit_list[4]
 
-
-
-	total,num = len(train_list),0
+	total, num = len(train_list), 0
 
 	while True:
 
-		x,y = random.randint(0,np.array(DiDr_list).shape[0]),random.randint(0,np.array(DiDr_list).shape[1])
+		x, y = random.randint(0, np.array(DiDr_list).shape[0]), random.randint(0, np.array(DiDr_list).shape[1])
 
 		if DiDr_list[x][y] == 0:
-
-			train_list.append((x,y))
+			train_list.append((x, y))
 
 			num += 1
 
 		if num == total:
-
 			break
 
-
-
 	random.shuffle(train_list)
-
+	BATCHCNN.train(np.array(train_list))
 	train_num = 0
 
-
 	for i in range(len(train_list)):
-
-		print('第 %d 组数据训练'%train_num,'第%d次进入训练'%i,'训练标签%d'%DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
-
+		print('第 %d 组数据训练' % train_num, '第%d次进入训练' % i, '训练标签%d' % DiDr_array[train_list[i][0]][train_list[i][1]])
 
 		PstFilePath = "..\data\PSTF\(" + str(train_list[i][0]) + ")\\" + str(train_list[i][1]) + ".txt"
 
-		NoteEmbedding_list = EV.embeddingNoteVector( PstFilePath,DiDr ,train_list[i][0],train_list[i][1])
+		NoteEmbedding_list = EV.embeddingNoteVector(PstFilePath, DiDr, train_list[i][0], train_list[i][1])
 
-		CnnEmbedding_list = EV.CnnEmbeddingVector(DiDr,train_list[i][0],train_list[i][1])
-
-		if len(NoteEmbedding_list) != 0 or len(CnnEmbedding_list) != 0:
+		if len(NoteEmbedding_list) != 0:
 
 			train_num += 1
 
-			print('药物%d'%train_list[i][0],'疾病%d'%train_list[i][1],len(NoteEmbedding_list))
+			print('药物%d' % train_list[i][0], '疾病%d' % train_list[i][1], len(NoteEmbedding_list))
 
 			x_train = []
 
 			y_train = []
 
-
-
 			for m in range(len(NoteEmbedding_list)):
 
 				for n in range(len(NoteEmbedding_list[0]) - 1):
-
 					x_train.append(NoteEmbedding_list[0][n + 1])
 
-			y_train.append(DiDr_array[ train_list[i][0] ][ train_list[i][1] ])
+			y_train.append(DiDr_array[train_list[i][0]][train_list[i][1]])
 
 			train_loader = torch.utils.data.DataLoader(dataset=np.array(x_train), batch_size=4, shuffle=True)
 
 			y_train = torch.Tensor(np.array(y_train))
 
-			# Node_Node_path_num = len(x_train)
-			b_y = torch.Tensor.long(Variable(y_train))
-			if torch.cuda.is_available():
-				b_y = b_y.cuda()
 			for epoch in range(EPOCH):
-				#----------CNN训练----------------------
-				cnn_x = torch.Tensor(torch.Tensor(np.array(CnnEmbedding_list)))
+
+				b_y = torch.Tensor.long(Variable(y_train))
+
 				if torch.cuda.is_available():
-					cnn_x = cnn_x.cuda()
-				cnn_out = Atten.cnn(cnn_x.unsqueeze(0))
-				cnn_loss = Atten.loss_func(cnn_out,b_y)
-				Atten.optimizer.zero_grad()
-				cnn_loss.backward()
-				Atten.optimizer.step()
-				print('CNN','Epoch:', epoch, '|train loss:%.4f' % cnn_loss.data[0])
+					b_y = b_y.cuda()
 
-			for epoch in range(EPOCH):
-				#----------GRU训练----------------------
-				if len(NoteEmbedding_list) != 0:
-					output = prml(train_loader)
-					loss = loss_func(output, b_y)
-					optimizer.zero_grad()
-					loss.backward()
-					optimizer.step()
-					print('GRU','Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
+				# ----------GRU训练----------------------
 
+				output = prml(train_loader)
 
-	torch.save(prml,'..\data\gru_Module.pkl')			#保存LSTM模型
-	torch.save(Atten.cnn,'..\data\cnn_Module.pkl')		#保存CNN模型
+				loss = loss_func(output, b_y)
 
+				optimizer.zero_grad()
 
+				loss.backward()
 
-	'''
-	#------------------test GRU----------------------------------------	
-	'''
-	model = torch.load('..\data\gru_Module.pkl')  #加载模型
+				optimizer.step()
+
+				print('GRU', 'Epoch:', epoch, '|train loss:%.4f' % loss.data[0])
+
+	torch.save(prml, '..\data\GRUM.pkl')  # 保存LSTM模型
+
+	model = torch.load('..\data\GRUM.pkl')  # 加载模型
 
 	DiDr_testPathArray = []
 
 	for i in range(DiDr_testArray.shape[0]):
-
 		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
 
 		DiDr_testPathArray.append(mid)
 
-	DiDr_testPathArray = np.array(DiDr_testPathArray)		#测试中1 变为-1 后的结果
+	DiDr_testPathArray = np.array(DiDr_testPathArray)  # 测试中1 变为-1 后的结果
 
-	prediction_gru = np.zeros(DiDr_testPathArray.shape,dtype = float) #存储test后的预测结果
+	prediction = np.zeros(DiDr_testPathArray.shape, dtype=float)  # 存储test后的预测结果
 
 	for m in range(DiDr_testPathArray.shape[0]):
 
@@ -252,7 +231,6 @@ if __name__ == "__main__":
 				for i in range(len(NoteEmbedding_list)):
 
 					for j in range(len(NoteEmbedding_list[0]) - 1):
-
 						x_train.append(NoteEmbedding_list[0][j + 1])
 
 				train_loader = torch.utils.data.DataLoader(dataset=np.array(x_train), batch_size=4, shuffle=True)
@@ -264,64 +242,20 @@ if __name__ == "__main__":
 					b_x = torch.Tensor.float(Variable(x.view(-1, 4, 1444)))
 
 					if torch.cuda.is_available():
-
 						b_x = b_x.cuda()
 
-					predict_gru = model(b_x)
+					predict = model(b_x)
 
-					p.append(F.softmax(predict_gru[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
+					# p.append( RFTL.softmax2(predict[0].tolist()).tolist()) #将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
-				p = np.sum(np.array(p),axis = 0)	#p = [[0.46,0.53]]
+					p.append(F.softmax(predict[0]).tolist())  # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
 
-				prediction_gru[m][n] = p[1]
+				p = np.sum(np.array(p), axis=0)  # p = [[0.46,0.53]]
 
-				print('药物%d'%m,'疾病%d'%n,p[1])
+				prediction[m][n] = p[1]
 
-		np.savetxt('..\data\prediction_gru.txt',
+				print('药物%d' % m, '疾病%d' % n, p[1])
 
-				   prediction_gru, fmt=['%s'] * prediction_gru.shape[1], newline='\n')
+		np.savetxt('..\data\GRUM.txt',
 
-	'''
-	#------------------test CNN----------------------------------------	
-	'''
-	model_cnn = torch.load('..\data\cnn_Module.pkl')  # 加载模型
-
-	DiDr_testCnnArray = []
-
-	for i in range(DiDr_testArray.shape[0]):
-		mid = [0 if x == 1 else x for x in DiDr_testArray[i].tolist()]
-		DiDr_testCnnArray.append(mid)
-
-	DiDr_testCnnArray = np.array(DiDr_testCnnArray)  # 测试中1 变为-1 后的结果
-
-	prediction_CNN = np.zeros(DiDr_testCnnArray.shape, dtype=float)  # 存储test后的预测结果
-
-	for m in range(DiDr_testCnnArray.shape[0]):
-
-		for n in range(DiDr_testCnnArray.shape[1]):
-			CnnEmbedding_list = EV.CnnEmbeddingVector( DiDr, m, n)
-
-			p_cnn = []
-
-			cnn_x = torch.Tensor(torch.Tensor(np.array(CnnEmbedding_list)))
-
-			if torch.cuda.is_available():
-				cnn_x = cnn_x.cuda()
-
-			predict_cnn = model_cnn(cnn_x.unsqueeze(0))
-
-			p_cnn=F.softmax(predict_cnn) # 将i到j的所有路径经过LSTM的测试结果(概率)保存在p中
-
-			prediction_CNN[m][n] = p_cnn[0,1]
-
-			print('药物%d' % m, '疾病%d' % n, p_cnn[0,1])
-
-		np.savetxt('..\data\prediction_CNN.txt',
-
-				   prediction_CNN, fmt=['%s'] * prediction_CNN.shape[1], newline='\n')
-
-	predict_End = 0.9 * prediction_CNN + 0.1 * prediction_gru
-
-	np.savetxt('..\data\prediction.txt',
-
-				   predict_End, fmt=['%s'] * predict_End.shape[1], newline='\n')
+				   prediction, fmt=['%s'] * prediction.shape[1], newline='\n')
